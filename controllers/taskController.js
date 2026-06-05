@@ -7,7 +7,16 @@ import {
 } from "../services/taskService.js";
 
 export async function getTasks(req, res) {
-  const tasks = await getAllTasks();
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 5;
+  const search = req.query.search || "";
+
+  const tasks = await getAllTasks(
+    req.user.id,
+    page,
+    limit,
+    search
+  );
 
   res.json(tasks);
 }
@@ -16,7 +25,8 @@ export async function createTask(req, res) {
   try {
     const newTask = await createNewTask(
       req.body.title,
-      req.body.dueDate
+      req.body.dueDate,
+      req.user.id
     );
 
     res.status(201).json({
@@ -35,7 +45,8 @@ export async function updateTask(req, res) {
     const updatedTask = await updateExistingTask(
       req.params.id,
       req.body.title,
-      req.body.dueDate
+      req.body.dueDate,
+      req.user.id
     );
 
     res.json({
@@ -50,7 +61,10 @@ export async function updateTask(req, res) {
 }
 
 export async function deleteTask(req, res) {
-  await deleteExistingTask(req.params.id);
+  await deleteExistingTask(
+    req.params.id,
+    req.user.id
+  );
 
   res.json({
     message: "Task berhasil dihapus",
@@ -58,7 +72,10 @@ export async function deleteTask(req, res) {
 }
 
 export async function toggleTask(req, res) {
-  const updatedTask = await toggleTaskCompleted(req.params.id);
+  const updatedTask = await toggleTaskCompleted(
+    req.params.id,
+    req.user.id
+  );
 
   res.json({
     message: "Status task berhasil diubah",

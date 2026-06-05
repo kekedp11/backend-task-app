@@ -1,10 +1,29 @@
 import Task from "../models/Task.js";
 
-export async function getAllTasks() {
-  return await Task.find();
+export async function getAllTasks(
+  userId,
+  page,
+  limit,
+  search
+) {
+  const skip = (page - 1) * limit;
+
+  return await Task.find({
+    userId,
+    title: {
+      $regex: search,
+      $options: "i",
+    },
+  })
+    .skip(skip)
+    .limit(limit);
 }
 
-export async function createNewTask(title, dueDate) {
+export async function createNewTask(
+  title,
+  dueDate,
+  userId
+) {
   if (!title || title.trim() === "") {
     throw new Error("Title wajib diisi");
   }
@@ -12,6 +31,7 @@ export async function createNewTask(title, dueDate) {
   const newTask = new Task({
     title,
     dueDate,
+    userId,
   });
 
   return await newTask.save();
@@ -20,14 +40,18 @@ export async function createNewTask(title, dueDate) {
 export async function updateExistingTask(
   id,
   title,
-  dueDate
+  dueDate,
+  userId
 ) {
   if (!title || title.trim() === "") {
     throw new Error("Title wajib diisi");
   }
 
-  return await Task.findByIdAndUpdate(
-    id,
+  return await Task.findOneAndUpdate(
+    {
+      _id: id,
+      userId,
+    },
     {
       title,
       dueDate,
@@ -38,15 +62,30 @@ export async function updateExistingTask(
   );
 }
 
-export async function deleteExistingTask(id) {
-  return await Task.findByIdAndDelete(id);
+export async function deleteExistingTask(
+  id,
+  userId
+) {
+  return await Task.findOneAndDelete({
+    _id: id,
+    userId,
+  });
 }
 
-export async function toggleTaskCompleted(id) {
-  const task = await Task.findById(id);
+export async function toggleTaskCompleted(
+  id,
+  userId
+) {
+  const task = await Task.findOne({
+    _id: id,
+    userId,
+  });
 
-  return await Task.findByIdAndUpdate(
-    id,
+  return await Task.findOneAndUpdate(
+    {
+      _id: id,
+      userId,
+    },
     {
       completed: !task.completed,
     },
